@@ -17,7 +17,7 @@ import ros_numpy as rosnp
 from std_msgs.msg import String
 from darknet_ros_msgs.msg import BoundingBoxes
 from tf_broadcaster.msg import DetectionCoordinates, PointCoordinates
-from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 
 class GetCenterCoordinates(object):
     def __init__(self):
@@ -37,10 +37,10 @@ class GetCenterCoordinates(object):
         self.rate=rospy.Rate(30)
         self.center_coordinates=None
         self.pub_message=rospy.Publisher(output_topic,DetectionCoordinates,queue_size=1)
-        self.movement=rospy.Subscriber("/mobile_base_controller/cmd_vel", Twist, self.movement_avoid, queue_size=1)
+        self.movement=rospy.Subscriber("/mobile_base_controller/odom", Odometry, self.movement_avoid, queue_size=1)
 
     def movement_avoid(self,req):
-        if req.linear.x !=0.0 or req.linear.y !=0.0 or req.linear.z !=0 or req.angular.x !=0.0 or req.angular.y !=0.0 or req.angular.z !=0:
+        if req.twist.twist.linear.x > 0.001 or req.twist.twist.angular.z > 0.001:
             self.movement=True
             rospy.loginfo("MOVEMENT")
             rospy.sleep(2.0)
