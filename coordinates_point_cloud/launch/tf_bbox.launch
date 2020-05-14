@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch> 
+
+ <node pkg="coordinates_point_cloud" name="get_coordinate_object" type="get_coordinate_object.py" output="screen">
+	<rosparam file="$(find coordinates_point_cloud)/config/config.yaml" command="load" />
+ </node>
+
+ <node pkg="tf_broadcaster" name="tf_broadcast" type="tf_broadcast.py" output="screen">
+	<rosparam file="$(find coordinates_point_cloud)/config/config.yaml" command="load" />
+ </node>
+</launch>
+
+  
+
