@@ -39,14 +39,13 @@ class GetCenterCoordinates(object):
         self.pub_message=rospy.Publisher(output_topic,DetectionCoordinates,queue_size=1)
         self.movement=rospy.Subscriber("/mobile_base_controller/odom", Odometry, self.movement_avoid, queue_size=1)
 
+    #Check if robot is moving from mobile_base_controller/odom
     def movement_avoid(self,req):
         if req.twist.twist.linear.x > 0.001 or req.twist.twist.angular.z > 0.001:
             self.movement=True
-            rospy.loginfo("MOVEMENT")
-            rospy.sleep(2.0)
+            rospy.sleep(1.5)
         else:
             self.movement=False
-            rospy.loginfo("NO MOVEMENT")
 
     def handle_result_msg(self,req):
         """
@@ -55,15 +54,18 @@ class GetCenterCoordinates(object):
         Call the get_center_coordinates function
         """
         if self.movement==False:
+            list_score=[]
             list_label=[]
             list_height=[]
             list_width=[]
-            data_array=numpy.zeros((len(req.bounding_boxes)),dtype={'names':('label','center_height','center_width'),'formats':('U30',numpy.int32,numpy.int32)})
+            data_array=numpy.zeros((len(req.bounding_boxes)),dtype={'names':('label','score','center_height','center_width'),'formats':('U30',numpy.float32,numpy.int32,numpy.int32)})
             for bbox in req.bounding_boxes:
+                list_score.append(bbox.probability)
                 list_label.append(bbox.Class)
                 center=[bbox.ymax-(bbox.ymax-bbox.ymin)/2,bbox.xmax-(bbox.xmax-bbox.xmin)/2]
                 list_height.append(center[0])
                 list_width.append(center[1])
+            data_array['score']=list_score
             data_array['label']=list_label
             data_array['center_height']=list_height
             data_array['center_width']=list_width
@@ -87,18 +89,21 @@ class GetCenterCoordinates(object):
         Will publish a custom message with a table containing each point XYZ with its label
         """
         nb_centers=data_array.shape
-        self.center_coordinates=numpy.zeros((nb_centers[0]),dtype={'names':('label','x','y','z'),'formats':('U30',numpy.float32,numpy.float32,numpy.float32)})
+        self.center_coordinates=numpy.zeros((nb_centers[0]),dtype={'names':('label','score','x','y','z'),'formats':('U30',numpy.float32,numpy.float32,numpy.float32,numpy.float32)})
         array=rosnp.point_cloud2.pointcloud2_to_xyz_array(self.cloud_msg,False)
 	
+        list_score=[]
         list_label=[]
         list_center_x=[]
         list_center_y=[]
         list_center_z=[]
         for object in data_array:
+            list_score.append(object['score'])
             list_label.append(object['label'])
             list_center_x.append(array[object['center_height']][object['center_width']][0])
             list_center_y.append(array[object['center_height']][object['center_width']][1])
             list_center_z.append(array[object['center_height']][object['center_width']][2])
+        self.center_coordinates["score"]=list_score
         self.center_coordinates["label"]=list_label
         self.center_coordinates["x"]=list_center_x
         self.center_coordinates["y"]=list_center_y
@@ -109,6 +114,8 @@ class GetCenterCoordinates(object):
         for object in data_array:
             point=PointCoordinates()
             name=object['label']
+            score=object['score']
+            point.score=score
             point.name=name.encode('utf-8')
             point.x=array[object['center_height']][object['center_width']][0]
             point.y=array[object['center_height']][object['center_width']][1]
