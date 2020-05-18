@@ -1,13 +1,15 @@
-#!/usr/bin/env python2
-
+#!/usr/bin/env python
+__author__ = 'simonernst'
 """
 This program will get a ROS custom message in which we can find each bounding box center's
 XYZ coordinates for a detected object and associate a TF to the center coordinates 
 
 Written by Thomas CURE and Simon ERNST
 """
+
+import rospy
 import os, time
-import rospy, roslib
+
 import math, json, random
 from rospy_message_converter import message_converter, json_message_converter
 import tf
@@ -18,17 +20,17 @@ from robocup_msgs.msg import InterestPoint
 import thread
 from map_manager.srv import *
 
-roslib.load_manifest('tf_broadcaster')
+class ObjectTfBroadcaster:
 
-class ObjectTfBroadcaster(object):
-
-    TEMP_PATH="/home/simon/catkin_robocup/data/world_mng/temp/"
-    MAP_MANAGER_PATH="/home/simon/catkin_robocup/data/world_mng/interest_points/"
+    TEMP_PATH=""
+    MAP_MANAGER_PATH=""
     _sleep_time = 2
 
 
-
-    def __init__(self):
+    def __init__(self,conf_path,conf_path2):
+        print(os.getcwd())
+        self.TEMP_PATH=conf_path2
+        self.MAP_MANAGER_PATH=conf_path
         self.configure()
 
     def configure(self):
@@ -85,8 +87,6 @@ class ObjectTfBroadcaster(object):
                     json_tmp.close()
                     rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
 
-
-                    print()
                     if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
                         json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
                         json_itp.write(json.dumps(data))
@@ -94,7 +94,7 @@ class ObjectTfBroadcaster(object):
                         rospy.loginfo("Updating Interest Point %s", fileName)
             time.sleep(self._sleep_time)
 
-            
+
     def save_InterestPoint(self):
         tmp_dir = os.listdir(self.TEMP_PATH)
         itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
@@ -254,10 +254,17 @@ class ObjectTfBroadcaster(object):
 
 
 if __name__ == '__main__':
+    
+    
     rospy.init_node('tfbroadcaster')
-    a=ObjectTfBroadcaster()
-    while not rospy.is_shutdown():
-        a.rate.sleep()
+    map_value="../../../../data/world_mng/interest_points/"
+    temp_value="../../../../data/world_mng/temp/"
+    config_directory_param=rospy.get_param("~confPath",map_value)
+    config_directory_param2=rospy.get_param("~trucpath",temp_value)
+
+    mm = ObjectTfBroadcaster(config_directory_param,config_directory_param2)
+
+
 
 
 #{"count": 20, "pose": {"position": {"y": -2.4859366898875077, "x": 0.04547630116745249, "z": 0.14868391051910268}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}, "head_yaw": 0.0, "label": "object_pitcher0", "score": 0.0, "overlap": 0, "arm_position": 0, "confidence_darknet": 19.938501477241516, "head_pitch": 0.0, "last_seen": 1589536557.421262}
