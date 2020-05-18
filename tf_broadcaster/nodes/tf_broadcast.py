@@ -15,7 +15,7 @@ import tf
 from tf_broadcaster.msg import DetectionCoordinates, PointCoordinates
 from geometry_msgs.msg import PointStamped, Pose
 from robocup_msgs.msg import InterestPoint
-
+import thread
 from map_manager.srv import *
 
 roslib.load_manifest('tf_broadcaster')
@@ -24,66 +24,77 @@ class ObjectTfBroadcaster(object):
 
     TEMP_PATH="/home/simon/catkin_robocup/data/world_mng/temp/"
     MAP_MANAGER_PATH="/home/simon/catkin_robocup/data/world_mng/interest_points/"
+    _sleep_time = 2
+
+
+
     def __init__(self):
-        """
-        Create an instance of ObjectTfBroadcaster Class.
-        Setup the ROS node and the program's parameters
-        """
-        rospy.init_node('tfbroadcaster')
+        self.configure()
+
+    def configure(self):
+        
         self.dirs = os.listdir(self.TEMP_PATH)
         self.br=tf.TransformBroadcaster()
         self.listener=tf.TransformListener()
-        self.rate = rospy.Rate(10)
+
         variable=rospy.get_param('~result_topic')
         self.tf_frame_source=rospy.get_param('~tf_frame_source')
         self.tf_frame_target=rospy.get_param('~tf_frame_target')
         self.sub_detection_object=rospy.Subscriber(variable,DetectionCoordinates,self.handle_message_objects)
 
+        thread.start_new_thread(self.update_score,())
+
+        # spin() simply keeps python from exiting until this node is stopped
+        rospy.spin()
+
 
     def update_score(self):  
-        dirs = os.listdir(self.TEMP_PATH)
-        itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
+        while not rospy.is_shutdown():
+            dirs = os.listdir(self.TEMP_PATH)
+            itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
+            
 
-        for fileName in dirs:
-            score=0.0
-            if "object" in str(fileName):
-                json_file = open(self.TEMP_PATH + str(fileName), 'r')
-                data = json.load(json_file)
-                json_file.close()
-                cumul_darknet = data['confidence_darknet']
-                count = data['count']
-                overlap = data['overlap']
+            for fileName in dirs:
+                score=0.0
+                if "object" in str(fileName):
+                    json_file = open(self.TEMP_PATH + str(fileName), 'r')
+                    data = json.load(json_file)
+                    json_file.close()
+                    cumul_darknet = data['confidence_darknet']
+                    count = data['count']
+                    overlap = data['overlap']
 
-                #total counts - counts of other objects at the same location
-                corrected_counts = count - overlap
-                
-                if corrected_counts < 0:
-                    corrected_counts = 0
+                    #total counts - counts of other objects at the same location
+                    corrected_counts = count - overlap
+                    
+                    if corrected_counts < 0:
+                        corrected_counts = 0
 
-                temps = time.time() - data['last_seen']
-                round_time=math.ceil(temps)
-                val = math.log(round_time+0.0000001)+1
-                mean_darknet = cumul_darknet / count
-                score = (float(corrected_counts)*mean_darknet/float(val))/count
+                    temps = time.time() - data['last_seen']
+                    round_time=math.ceil(temps)
+                    val = math.log(round_time+0.0000001)+1
+                    mean_darknet = cumul_darknet / count
+                    score = (float(corrected_counts)*mean_darknet/float(val))/count
 
-                rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
-                                str(data['label']), mean_darknet, temps,count,corrected_counts)
+                    rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
+                                    str(data['label']), mean_darknet, temps,count,corrected_counts)
 
-                json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
-                data['score']=score
-                json_tmp.write(json.dumps(data))
-                json_tmp.close()
-                rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
-
-
-                print()
-                if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
-                    json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
-                    json_itp.write(json.dumps(data))
-                    json_itp.close()
-                    rospy.loginfo("Updating Interest Point %s", fileName)
+                    json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
+                    data['score']=score
+                    json_tmp.write(json.dumps(data))
+                    json_tmp.close()
+                    rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
 
 
+                    print()
+                    if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+                        json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
+                        json_itp.write(json.dumps(data))
+                        json_itp.close()
+                        rospy.loginfo("Updating Interest Point %s", fileName)
+            time.sleep(self._sleep_time)
+
+            
     def save_InterestPoint(self):
         tmp_dir = os.listdir(self.TEMP_PATH)
         itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
@@ -235,7 +246,6 @@ class ObjectTfBroadcaster(object):
 
                 else:
                     rospy.loginfo("Impossible to calculate depth of object")
-        self.update_score()
         self.save_InterestPoint()
         tac=time.time()
         process=tac-tic
@@ -244,7 +254,7 @@ class ObjectTfBroadcaster(object):
 
 
 if __name__ == '__main__':
-    
+    rospy.init_node('tfbroadcaster')
     a=ObjectTfBroadcaster()
     while not rospy.is_shutdown():
         a.rate.sleep()
