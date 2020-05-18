@@ -41,11 +41,11 @@ class GetCenterCoordinates(object):
 
     #Check if robot is moving from mobile_base_controller/odom
     def movement_avoid(self,req):
-        if req.twist.twist.linear.x > 0.001 or req.twist.twist.angular.z > 0.001:
+        if req.twist.twist.linear.x < 0.001 and req.twist.twist.angular.z < 0.001:
+            self.movement=False
+        else:
             self.movement=True
             rospy.sleep(1.5)
-        else:
-            self.movement=False
 
     def handle_result_msg(self,req):
         """
