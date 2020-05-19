@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 __author__ = 'simonernst'
 """
-This program will get a ROS custom message in which we can find each bounding box center's
-XYZ coordinates for a detected object and associate a TF to the center coordinates 
+This program will get 3D position of an item from get_coordinate_object node 
+and associate it to an Interest Point
 
-Written by Thomas CURE and Simon ERNST
+Written by Simon ERNST
 """
 
 import rospy
@@ -76,7 +76,7 @@ class ObjectTfBroadcaster:
                     round_time=math.ceil(temps)
                     val = math.log(round_time+0.0000001)+1
                     mean_darknet = cumul_darknet / count
-                    score = (float(corrected_counts)*mean_darknet/float(val))/count
+                    score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
 
                     rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
                                     str(data['label']), mean_darknet, temps,count,corrected_counts)
@@ -255,16 +255,17 @@ class ObjectTfBroadcaster:
 
 if __name__ == '__main__':
     
-    
     rospy.init_node('tfbroadcaster')
-    map_value="../../../../data/world_mng/interest_points/"
-    temp_value="../../../../data/world_mng/temp/"
+    
+    try:
+        map_value="../../../../data/world_mng/interest_points/"
+        temp_value="../../../../data/world_mng/temp/"
+    except:
+        pass
+        #Find a way to create those directories
+
+
     config_directory_param=rospy.get_param("~confPath",map_value)
     config_directory_param2=rospy.get_param("~trucpath",temp_value)
 
     mm = ObjectTfBroadcaster(config_directory_param,config_directory_param2)
-
-
-
-
-#{"count": 20, "pose": {"position": {"y": -2.4859366898875077, "x": 0.04547630116745249, "z": 0.14868391051910268}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}, "head_yaw": 0.0, "label": "object_pitcher0", "score": 0.0, "overlap": 0, "arm_position": 0, "confidence_darknet": 19.938501477241516, "head_pitch": 0.0, "last_seen": 1589536557.421262}
