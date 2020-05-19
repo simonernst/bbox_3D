@@ -31,7 +31,7 @@ class MapYcbAreas:
             if x_robot > zone['x_lowerlimit'] and x_robot < zone['x_upperlimit'] and y_robot > zone['y_lowerlimit'] and y_robot < zone['y_upperlimit']:
                 return CurrentAreaResponse(str(zone['label']))
 
-        return CurrentAreaResponse("Unable to find your location right now")
+        return CurrentAreaResponse('')
 
     # def get_current_pos(self):
     #     now = rospy.Time(0)

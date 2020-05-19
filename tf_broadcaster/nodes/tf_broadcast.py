@@ -19,6 +19,7 @@ from geometry_msgs.msg import PointStamped, Pose
 from robocup_msgs.msg import InterestPoint
 import thread
 from map_manager.srv import *
+from tf_broadcaster.srv import CurrentArea
 
 class ObjectTfBroadcaster:
 
@@ -224,17 +225,26 @@ class ObjectTfBroadcaster:
                         itp_pose.orientation.z = 0
                         itp_pose.orientation.w = 1
 
-                        #calling MapManager/save_interestPoint Service
-                        #rospy.wait_for_service('save_InterestPoint')
-                        #save_InterestPoint = rospy.ServiceProxy('save_InterestPoint', saveitP_service)
+                        #calling tf_broadcaster/getCurrentArea Service
+                        service_name = rospy.get_param("~service_get_current_area_name")
+                        rospy.wait_for_service(service_name)
+                        proxy_to_get_current_area = rospy.ServiceProxy(service_name, CurrentArea)
+                        response = self.proxy_areas(itp_pose.position.x,itp_pose.position.y)
+
+                        if response.room != '':
+                            current_room = response.room
+                        else:
+                            current_room = ''
+
                         itPoint=InterestPoint()
                         itPoint.count = 1
                         itPoint.confidence_darknet = darknet_score
                         itPoint.last_seen = time.time()
-                        itPoint.label = "object_" + str(point.name)+str(c)
+                        itPoint.label = "object_" + current_room + "_" + str(point.name)+str(c)
                         itPoint.pose = itp_pose
                         itPoint.arm_position = 0
                         #success = save_InterestPoint(itPoint)
+
 
                         temp_file = open(self.TEMP_PATH + str(itPoint.label) + '.coord', 'w+')
                         json_str = json_message_converter.convert_ros_message_to_json(itPoint)

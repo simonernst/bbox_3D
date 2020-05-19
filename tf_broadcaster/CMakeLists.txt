@@ -59,7 +59,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_service_files(
    FILES
    CurrentArea.srv
-#   Service2.srv
+   GetObjectsInRoom.srv
  )
 
 ## Generate actions in the 'action' folder
