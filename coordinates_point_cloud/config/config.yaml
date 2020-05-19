@@ -7,4 +7,4 @@ tf_frame_source: "camera_depth_link"
 tf_frame_target: "map"
 map_file_path: "/../data/map_ycb_areas.json"
 service_get_current_area_name: "get_current_area_in_map"
-
+service_get_objects_in_room: "get_objects_list"

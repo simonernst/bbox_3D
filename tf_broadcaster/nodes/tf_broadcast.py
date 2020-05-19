@@ -19,7 +19,7 @@ from geometry_msgs.msg import PointStamped, Pose
 from robocup_msgs.msg import InterestPoint
 import thread
 from map_manager.srv import *
-from tf_broadcaster.srv import CurrentArea
+from tf_broadcaster.srv import CurrentArea, GetObjectsInRoom, GetObjectsInRoomResponse
 
 class ObjectTfBroadcaster:
 
@@ -45,10 +45,31 @@ class ObjectTfBroadcaster:
         self.tf_frame_target=rospy.get_param('~tf_frame_target')
         self.sub_detection_object=rospy.Subscriber(variable,DetectionCoordinates,self.handle_message_objects)
 
+        self.get_objects_list_service = rospy.Service(rospy.get_param("~service_get_objects_in_room"), GetObjectsInRoom, self.handle_service_get_objects)
+
+
         thread.start_new_thread(self.update_score,())
 
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
+
+
+    def handle_service_get_objects(self,req):
+        room = req.room
+        
+        list_objects = []
+
+        dirs = os.listdir(self.MAP_MANAGER_PATH)
+        for fileName in dirs:
+            if "object_"+room in fileName:
+                with open(self.MAP_MANAGER_PATH + fileName,"r") as f:
+                    data = json.load(f)
+                    list_objects.append(json.dumps(data))
+
+        return GetObjectsInRoomResponse(list_objects)
+
+
+
 
 
     def update_score(self):  
