@@ -14,11 +14,11 @@ class MapYcbAreas:
         rospy.init_node("YCB_areas")
         dir_path = os.path.dirname(os.path.realpath(__file__))
 
-        with open(dir_path+"/../data/map_ycb_areas.json","r") as f:
+        with open(dir_path+rospy.get_param("~map_file_path"),"r") as f:
                 self.areas=json.load(f)
         
         rospy.loginfo(self.areas)
-        self.current_area_service = rospy.Service('get_current_area_in_map', CurrentArea, self.handle_current_area_service)
+        self.current_area_service = rospy.Service(rospy.get_param("~service_get_current_area_name"), CurrentArea, self.handle_current_area_service)
 
         rospy.loginfo("init done")
 
