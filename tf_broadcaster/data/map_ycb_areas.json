@@ -1,0 +1,52 @@
+[
+    {
+        "label": "entrance",
+        "id": 1,
+        "x_lowerlimit": -2.0,
+        "x_upperlimit": 1.2,
+        "y_lowerlimit": -5.1,
+        "y_upperlimit": 3.9
+    },
+    {
+        "label": "living room",
+        "id": 2,
+        "x_lowerlimit": -2.0,
+        "x_upperlimit": 5.15,
+        "y_lowerlimit": 3.9,
+        "y_upperlimit": 7.1
+    },
+    {
+        "label": "kitchen",
+        "id": 3,
+        "x_lowerlimit": 1.2,
+        "x_upperlimit": 5.15,
+        "y_lowerlimit": 1.0,
+        "y_upperlimit": 3.9
+    },
+    {
+        "label": "single bedroom",
+        "id": 4,
+        "x_lowerlimit": 1.2,
+        "x_upperlimit": 5.15,
+        "y_lowerlimit": -1.24,
+        "y_upperlimit": 1.0
+    },
+    {
+        "label": "double bedroom",
+        "id": 5,
+        "x_lowerlimit": 1.2,
+        "x_upperlimit": 5.15,
+        "y_lowerlimit": -4.96,
+        "y_upperlimit": -1.24
+    },
+    {
+        "label": "sas",
+        "id": 6,
+        "x_lowerlimit": -2.0,
+        "x_upperlimit": 1.67,
+        "y_lowerlimit": -6.37,
+        "y_upperlimit": -4.96
+    }
+
+
+]
