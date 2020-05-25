@@ -249,7 +249,7 @@ class ObjectTfBroadcaster:
                         #calling tf_broadcaster/getCurrentArea Service
                         service_name = rospy.get_param("~service_get_current_area_name")
                         rospy.wait_for_service(service_name)
-                        proxy_to_get_current_area = rospy.ServiceProxy(service_name, CurrentArea)
+                        self.proxy_areas = rospy.ServiceProxy(service_name, CurrentArea)
                         response = self.proxy_areas(itp_pose.position.x,itp_pose.position.y)
 
                         if response.room != '':
