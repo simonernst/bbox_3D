@@ -19,7 +19,8 @@ from geometry_msgs.msg import PointStamped, Pose
 from robocup_msgs.msg import InterestPoint
 import thread
 from map_manager.srv import *
-from tf_broadcaster.srv import CurrentArea, GetObjectsInRoom, GetObjectsInRoomResponse
+from tf_broadcaster.srv import CurrentArea, GetObjectsInRoom, GetObjectsInRoomResponse, GetPeopleInRoom, GetPeopleInRoomResponse
+from ros_people_mng_msgs.msg import PeopleMetaInfoListWithoutImg
 
 class ObjectTfBroadcaster:
 
@@ -45,8 +46,11 @@ class ObjectTfBroadcaster:
         self.tf_frame_target=rospy.get_param('~tf_frame_target')
         self.sub_detection_object=rospy.Subscriber(variable,DetectionCoordinates,self.handle_message_objects)
 
+        self.sub_detection_people = rospy.Subscriber(rospy.get_param("~people_detection_topic"),PeopleMetaInfoListWithoutImg, self.handle_people_detection_topic)
+
         self.get_objects_list_service = rospy.Service(rospy.get_param("~service_get_objects_in_room"), GetObjectsInRoom, self.handle_service_get_objects)
 
+        self.get_people_list_in_room_service = rospy.Service(rospy.get_param("~service_get_people_in_room"),GetPeopleInRoom,self.handle_service_get_people_in_room)
 
         thread.start_new_thread(self.update_score,())
 
@@ -69,7 +73,42 @@ class ObjectTfBroadcaster:
         return GetObjectsInRoomResponse(list_objects)
 
 
+    def handle_service_get_people_in_room(self,req):
+        room = req.room
 
+        list_people = []
+        dirs = os.listdir(self.MAP_MANAGER_PATH)
+        for fileName in dirs:
+            if "people_"+room in fileName:
+                with open(self.MAP_MANAGER_PATH + fileName,"r") as f:
+                    data = json.load(f)
+                    list_people.append(json.dumps(data))
+                    
+        return GetPeopleInRoomResponse(list_people)
+
+    def handle_people_detection_topic(self,req):
+        detection_list = req.peopleList
+        for detected_people in detection_list:
+            if detected_people.label_id == "Unknown" or detected_people.label_id == "None":
+                rospy.loginfo("I can't save data from unknown people")
+
+            else:
+                people_name = detected_people.label_id
+                people_score = detected_people.label_score
+                people_position = detected_people.pose.position
+                now = rospy.Time(0)
+                object_point = PointStamped()
+                object_point.header.frame_id = "palbator_arm_kinect_link"
+                object_point.header.stamp = now
+                object_point.point.x = people_position.x
+                object_point.point.y = people_position.y
+                object_point.point.z = people_position.z
+                rospy.loginfo("{class_name} : Object coords in palbator_arm_kinect_link : %s".format(class_name=self.__class__.__name__),str(object_point))
+                self.listener.waitForTransform("/map", "/palbator_arm_kinect_link", now, rospy.Duration(20))
+                target = self.listener.transformPoint("/map",object_point)
+                rospy.loginfo("{class_name} : Object coords in map : %s".format(class_name=self.__class__.__name__),str(target))
+
+                ####### TO DO : STOCKER LES INFOS DES PERSONNES CONNUES DETECTEES (un peu comme les objets) ######
 
 
     def update_score(self):  

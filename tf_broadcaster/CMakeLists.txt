@@ -60,6 +60,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    CurrentArea.srv
    GetObjectsInRoom.srv
+   GetPeopleInRoom.srv
  )
 
 ## Generate actions in the 'action' folder
