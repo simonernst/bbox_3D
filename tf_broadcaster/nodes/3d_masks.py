@@ -14,7 +14,7 @@ import tf
 import std_msgs.msg
 
 from geometry_msgs.msg import Point32
-
+from sensor_msgs.msg import PointCloud
 from yolact_ros_msgs.msg import Detections
 from yolact_ros_msgs.msg import Detection
 from yolact_ros_msgs.msg import Box
@@ -55,12 +55,12 @@ class MaskTo3D(object):
     def __init__(self):
         rospy.init_node("depth_mask",anonymous=True)
         mask_msg="/yolact_ros/detections"
-        self.listener=tf.TransformListener()
+        #self.listener=tf.TransformListener()
         self.pointcloud_sub=rospy.Subscriber("/kinect/depth/points", PointCloud2, self.pcl_callback)
         self.sub_mask_msg=rospy.Subscriber(mask_msg,Detections,self.mask_msg_callback)
         self.pub_mask_depth=rospy.Publisher("/mask_coordinates", Mask_Depth, queue_size=1)
         self.cloud_msg=PointCloud2()
-        #self.pointcloud_publisher = rospy.Publisher("/my_pointcloud_topic", Pointcloud)
+        self.pointcloud_publisher = rospy.Publisher("/my_pointcloud_topic", PointCloud2, queue_size=1)
         self.rate=rospy.Rate(100)
         self.br = tf.TransformBroadcaster()
         self.done = 1
@@ -140,38 +140,26 @@ class MaskTo3D(object):
             scaled_polygon_pcl = pcl2.create_cloud_xyz32(h, points_list)
 
 
+            #Transform the PCL into the base_link frame
+            #tf_buffer = tf2_ros.Buffer()
+            #tf_listener = tf2_ros.TransformListener(tf_buffer)
+            #self.listener.waitForTransform("base_footprint","kinect_depth_link", rospy.Time(0), rospy.Duration(4.0))
+            #transform = tf_buffer.lookup_transform("base_footprint","kinect_depth_link", rospy.Time(0))
+            #cloud_out = do_transform_cloud(scaled_polygon_pcl, transform)
+
             #Transform the PCL into the map frame
             tf_buffer = tf2_ros.Buffer()
-            tf_listener = tf2_ros.TransformListener(tf_buffer)
-            transform = tf_buffer.lookup_transform("map","kinect_depth_link", rospy.Time())
+            tf_listener = tf2_ros.TransformListener(tf_buffer)            
+            #tf_listener.waitForTransform("map","kinect_depth_link", rospy.Time(0), rospy.Duration(4.0))
+            transform = tf_buffer.lookup_transform("map","kinect_depth_link", rospy.Time(0), rospy.Duration(1.0))
             cloud_out = do_transform_cloud(scaled_polygon_pcl, transform)
 
-            #self.listener.waitForTransform("kinect_depth_link","map", rospy.Time(0), rospy.Duration(1.0))
-            #p=self.listener.transformPointCloud("map", scaled_polygon_pcl.)
 
-
-            
-
-            rospy.loginfo("BBB")
             if self.valid:
-                rospy.loginfo("valid")
-                list_tot=[]
-                for l in range(0,len(list_x)):
-                    list_tot.append([list_x[l],list_y[l],list_z[l]])
-
-                with open('list_tot.txt', 'w') as f:
-                    for stuff in list_tot:
-                        f.write("%s\n" % stuff)
-
-                for k in range(0,len(list_x)):
-                    tf_name=str(item.class_name)+str(k)
-                    #print(tf_name)
-                    self.br.sendTransform((list_x[k],list_y[k],list_z[k]),
-                                (0.0, 0.0, 0.0, 1.0),
-                                rospy.Time(0),
-                                tf_name,
-                                "map")
-                self.valid = False  
+                self.pointcloud_publisher.publish(cloud_out)
+                valid=False
+            #self.listener.waitForTransform("kinect_depth_link","map", rospy.Time(0), rospy.Duration(1.0))
+            #p=self.listener.transformPointCloud("map", scaled_polygon_pcl.)            
             #mask_message.xcoord = list_x
             #mask_message.ycoord = list_y
             #mask_message.zcoord = list_z
