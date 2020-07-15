@@ -29,6 +29,6 @@
         "x_lowerlimit": -1,
         "x_upperlimit": 1.5,
         "y_lowerlimit": 1.5,
-        "y_upperlimit": 4
-    },
+        "y_upperlimit": 1.5
+    }
 ]
