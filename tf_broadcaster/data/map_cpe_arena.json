@@ -1,0 +1,34 @@
+[
+    {
+        "label": "Bedroom",
+        "id": 1,
+        "x_lowerlimit": -1.8,
+        "x_upperlimit": 1,
+        "y_lowerlimit": -1.5,
+        "y_upperlimit": 1.5
+    },
+    {
+        "label": "Kitchen",
+        "id": 2,
+        "x_lowerlimit": -4.5,
+        "x_upperlimit": -1.8,
+        "y_lowerlimit": -1.5,
+        "y_upperlimit": 1.5
+    },
+    {
+        "label": "DiningRoom",
+        "id": 3,
+        "x_lowerlimit": -4,
+        "x_upperlimit": -1,
+        "y_lowerlimit": 1.5,
+        "y_upperlimit": 4.5
+    },
+    {
+        "label": "LivingRoom",
+        "id": 4,
+        "x_lowerlimit": -1,
+        "x_upperlimit": 1.5,
+        "y_lowerlimit": 1.5,
+        "y_upperlimit": 4
+    },
+]
