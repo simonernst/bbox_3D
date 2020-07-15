@@ -195,7 +195,12 @@ class ObjectTfBroadcaster:
                 rospy.loginfo("Removing file %s", file_remove)
                 os.remove(file_remove)
                 itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
-
+                
+            elif data['last_seen'] > 10000 and os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+                file_remove=str(self.MAP_MANAGER_PATH)+str(fileName)
+                rospy.loginfo("Removing file %s", file_remove)
+                os.remove(file_remove)
+                itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
 
 
     def handle_message_objects(self,req):
