@@ -1,0 +1,4 @@
+bool all_objects
+string object_label
+---
+string result_msg

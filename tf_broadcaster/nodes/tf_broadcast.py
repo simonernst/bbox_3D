@@ -9,7 +9,7 @@ Written by Simon ERNST
 
 import rospy
 import os, time
-
+import shutil
 import math, json, random
 from rospy_message_converter import message_converter, json_message_converter
 import tf
@@ -19,8 +19,10 @@ from geometry_msgs.msg import PointStamped, Pose
 from robocup_msgs.msg import InterestPoint
 import thread
 from map_manager.srv import *
-from tf_broadcaster.srv import CurrentArea, GetObjectsInRoom, GetObjectsInRoomResponse, GetPeopleInRoom, GetPeopleInRoomResponse
+from tf_broadcaster.srv import CurrentArea, GetObjectsInRoom, GetObjectsInRoomResponse, GetPeopleInRoom, GetPeopleInRoomResponse, ResetObjects, ResetObjectsResponse
 from ros_people_mng_msgs.msg import PeopleMetaInfoListWithoutImg
+
+
 
 class ObjectTfBroadcaster:
 
@@ -52,11 +54,70 @@ class ObjectTfBroadcaster:
 
         self.get_people_list_in_room_service = rospy.Service(rospy.get_param("~service_get_people_in_room"),GetPeopleInRoom,self.handle_service_get_people_in_room)
 
+        self.reset_objects_service = rospy.Service(rospy.get_param("~service_reset_objects"), ResetObjects, self.handle_reset_object_service)
+        self.update_score_available = True
         thread.start_new_thread(self.update_score,())
 
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
 
+    def handle_reset_object_service(self,req):
+        self.update_score_available = False
+        if req.all_objects == True:
+            rospy.loginfo("{class_name} : RESET OBJECTS IN TEMP FOLDER".format(class_name=self.__class__.__name__))
+            
+            for filename in os.listdir(self.TEMP_PATH):
+                file_path = os.path.join(self.TEMP_PATH, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    rospy.logerr('Failed to delete %s. Reason: %s',file_path, e)
+
+            
+            rospy.loginfo("{class_name} : RESETTING OBJECT FILES".format(class_name=self.__class__.__name__))
+            for filename in os.listdir(self.MAP_MANAGER_PATH):
+                if "object_" in filename:
+                    file_path = os.path.join(self.MAP_MANAGER_PATH,filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        rospy.logerr('Failed to delete %s. Reason: %s',file_path, e)
+
+        else:
+            rospy.loginfo("{class_name} : RESETTING OBJECT %s".format(class_name=self.__class__.__name__),req.object_label)
+            for filename in os.listdir(self.MAP_MANAGER_PATH):
+                if req.object_label in filename:
+                    file_path = os.path.join(self.MAP_MANAGER_PATH,filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        rospy.logerr('Failed to delete %s. Reason: %s',file_path, e)
+
+            for filename in os.listdir(self.TEMP_PATH):
+                if req.object_label in filename:
+                    file_path = os.path.join(self.TEMP_PATH,filename)
+                    try:
+                        if os.path.isfile(file_path) or os.path.islink(file_path):
+                            os.unlink(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                    except Exception as e:
+                        rospy.logerr('Failed to delete %s. Reason: %s',file_path, e)
+        
+        self.update_score_available = True
+
+        thread.start_new_thread(self.update_score,())
+
+        return ResetObjectsResponse("OK")
 
     def handle_service_get_objects(self,req):
         room = req.room
@@ -112,7 +173,7 @@ class ObjectTfBroadcaster:
 
 
     def update_score(self):  
-        while not rospy.is_shutdown():
+        while self.update_score_available:
             dirs = os.listdir(self.TEMP_PATH)
             itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
             
@@ -210,7 +271,7 @@ class ObjectTfBroadcaster:
         tic=time.time()
         self.dirs = os.listdir(self.TEMP_PATH)
         #os.system('clear')
-        rospy.loginfo("Reading interest point directory \n")
+        rospy.loginfo("Reading iremove_choosen_objectnterest point directory \n")
 
         if len(req.points)>0:
             for point in req.points:
