@@ -190,13 +190,13 @@ class ObjectTfBroadcaster:
                 success = save_InterestPoint(itPoint)
             
             #purging Interest Points too old and scoreless
-            elif data['last_seen'] > 200 and data['score']==0 and os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+            elif (time.time() - data['last_seen']) > 200 and data['score']==0 and os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
                 file_remove=str(self.MAP_MANAGER_PATH)+str(fileName)
                 rospy.loginfo("Removing file %s", file_remove)
                 os.remove(file_remove)
                 itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
                 
-            elif data['last_seen'] > 10000 and os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+            elif (time.time() - data['last_seen']) > 10000 and os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
                 file_remove=str(self.MAP_MANAGER_PATH)+str(fileName)
                 rospy.loginfo("Removing file %s", file_remove)
                 os.remove(file_remove)
@@ -218,7 +218,7 @@ class ObjectTfBroadcaster:
                 pos_y = point.y
                 pos_z = point.z
                 darknet_score = point.score
-
+                print(pos_x, pos_y, pos_z)
                 #Check if 3D pose available
                 if math.isnan(pos_x)==False and math.isnan(pos_y)==False and math.isnan(pos_z)==False:
 
@@ -229,6 +229,7 @@ class ObjectTfBroadcaster:
                     points.point.x = point.x
                     points.point.y = point.y
                     points.point.z = point.z
+                    self.listener.waitForTransform("map",self.tf_frame_source, rospy.Time(0), rospy.Duration(5.0))
                     p = self.listener.transformPoint("map",points)
                     pos_x = p.point.x
                     pos_y = p.point.y

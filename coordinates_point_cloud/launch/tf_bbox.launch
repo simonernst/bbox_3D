@@ -10,6 +10,8 @@
 		<rosparam file="$(find coordinates_point_cloud)/config/config.yaml" command="load"  />
 	</node>
 
+        <node pkg="tf" type="static_transform_publisher" name="kinect2_optical_to_kinect" args="0 0 0 -1.57 0 -1.97 kinect kinect2_rgb_optical_frame 100" />
+
 
 	<node pkg="tf_broadcaster" name="getMapAreas" type="getMapAreas.py" output="screen" cwd="node">
 		<rosparam file="$(find coordinates_point_cloud)/config/config.yaml" command="load"  />

@@ -24,10 +24,17 @@ class MapYcbAreas:
 
 
     def handle_current_area_service(self,req):
-
+        rospy.logwarn("get map area service")
         x_robot = req.coord_x
         y_robot = req.coord_y
+        rospy.loginfo("X Robot : %s",str(x_robot))
+        rospy.loginfo("Y Robot : %s",str(y_robot))
         for zone in self.areas:
+            rospy.loginfo("area name : %s",zone['label'])
+            rospy.loginfo("area X min : %s",str(zone['x_lowerlimit']))
+            rospy.loginfo("area X max : %s",str(zone['x_upperlimit']))
+            rospy.loginfo("area Y min : %s",str(zone['y_lowerlimit']))
+            rospy.loginfo("area Y max : %s",str(zone['y_upperlimit']))
             if x_robot > zone['x_lowerlimit'] and x_robot < zone['x_upperlimit'] and y_robot > zone['y_lowerlimit'] and y_robot < zone['y_upperlimit']:
                 return CurrentAreaResponse(str(zone['label']))
 

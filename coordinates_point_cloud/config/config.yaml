@@ -1,11 +1,11 @@
 #Config file for calculating 3D position of Object in bounding box
 
-depth_topic: "/camera/depth/points"
+depth_topic: "/kinect2/hd/points"
 boundingbox_sub: "/darknet_ros/bounding_boxes"
 result_topic: "/detection/center_depth"
-tf_frame_source: "camera_depth_link"
+tf_frame_source: "kinect2_rgb_optical_frame"
 tf_frame_target: "map"
-map_file_path: "/../data/map_cpe_arena.json"
+map_file_path: "/../data/map_cpe_crashtest.json"
 service_get_current_area_name: "get_current_area_in_map"
 service_get_objects_in_room: "get_objects_list"
 service_get_people_in_room: "get_people_list_in_room"
