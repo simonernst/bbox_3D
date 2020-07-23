@@ -214,7 +214,7 @@ class ObjectTfBroadcaster:
                     json_itp.write(json.dumps(data))
                     json_itp.close()
                     #rospy.loginfo("Updating Interest Point %s", fileName)
-        time.sleep(self._sleep_time)
+        #time.sleep(self._sleep_time)
 
 
     def save_InterestPoint(self):
