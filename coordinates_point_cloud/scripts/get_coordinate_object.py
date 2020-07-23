@@ -45,7 +45,7 @@ class GetCenterCoordinates(object):
             self.movement=False
         else:
             self.movement=True
-            rospy.sleep(3)
+            rospy.sleep(1.5)
 
     def handle_result_msg(self,req):
         """

@@ -182,6 +182,7 @@ class ObjectTfBroadcaster:
                 score=0.0
                 if "object" in str(fileName):
                     json_file = open(self.TEMP_PATH + str(fileName), 'r')
+                    rospy.logwarn(fileName)
                     data = json.load(json_file)
                     json_file.close()
                     cumul_darknet = data['confidence_darknet']
@@ -226,7 +227,7 @@ class ObjectTfBroadcaster:
             data = json.load(json_file)
             json_file.close()
 
-            if data['score']>0 and data['count']>10 and not os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+            if data['score']>0 and data['count']>5 and not os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
                 rospy.loginfo("Saving an object as Interest Point")
                 #save object position as geometry_msgs/Pose
                 itp_pose = Pose()
@@ -303,6 +304,7 @@ class ObjectTfBroadcaster:
                     for fileName in self.dirs:
                         if "object" in str(fileName):
                             with open(self.TEMP_PATH + str(fileName), 'r') as json_file:
+                                rospy.logwarn(fileName)
                                 data = json.load(json_file)
                                 json_file.close()
                             if pos_x - 0.5 <= data['pose']['position']['x'] <= pos_x + 0.5 and pos_y - 0.5 <= data['pose']['position']['y'] <= pos_y + 0.5 and pos_z - 0.5 <= data['pose']['position']['z'] <= pos_z + 0.5:
