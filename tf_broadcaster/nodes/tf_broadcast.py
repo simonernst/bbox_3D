@@ -173,49 +173,48 @@ class ObjectTfBroadcaster:
 
 
     def update_score(self):  
-        while self.update_score_available:
-            dirs = os.listdir(self.TEMP_PATH)
-            itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
-            
+        dirs = os.listdir(self.TEMP_PATH)
+        itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
+        
 
-            for fileName in dirs:
-                score=0.0
-                if "object" in str(fileName):
-                    json_file = open(self.TEMP_PATH + str(fileName), 'r')
-                    rospy.logwarn(fileName)
-                    data = json.load(json_file)
-                    json_file.close()
-                    cumul_darknet = data['confidence_darknet']
-                    count = data['count']
-                    overlap = data['overlap']
+        for fileName in dirs:
+            score=0.0
+            if "object" in str(fileName):
+                json_file = open(self.TEMP_PATH + str(fileName), 'r')
+                rospy.logwarn(fileName)
+                data = json.load(json_file)
+                json_file.close()
+                cumul_darknet = data['confidence_darknet']
+                count = data['count']
+                overlap = data['overlap']
 
-                    #total counts - counts of other objects at the same location
-                    corrected_counts = count - overlap
-                    
-                    if corrected_counts < 0:
-                        corrected_counts = 0
+                #total counts - counts of other objects at the same location
+                corrected_counts = count - overlap
+                
+                if corrected_counts < 0:
+                    corrected_counts = 0
 
-                    temps = time.time() - data['last_seen']
-                    round_time=math.ceil(temps)
-                    val = math.log(round_time+0.0000001)+1
-                    mean_darknet = cumul_darknet / count
-                    score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
+                temps = time.time() - data['last_seen']
+                round_time=math.ceil(temps)
+                val = math.log(round_time+0.0000001)+1
+                mean_darknet = cumul_darknet / count
+                score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
 
-                    #rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
-                    #                str(data['label']), mean_darknet, temps,count,corrected_counts)
+                #rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
+                #                str(data['label']), mean_darknet, temps,count,corrected_counts)
 
-                    json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
-                    data['score']=score
-                    json_tmp.write(json.dumps(data))
-                    json_tmp.close()
-                    #rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
+                json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
+                data['score']=score
+                json_tmp.write(json.dumps(data))
+                json_tmp.close()
+                #rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
 
-                    if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
-                        json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
-                        json_itp.write(json.dumps(data))
-                        json_itp.close()
-                        #rospy.loginfo("Updating Interest Point %s", fileName)
-            time.sleep(self._sleep_time)
+                if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+                    json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
+                    json_itp.write(json.dumps(data))
+                    json_itp.close()
+                    #rospy.loginfo("Updating Interest Point %s", fileName)
+        time.sleep(self._sleep_time)
 
 
     def save_InterestPoint(self):
@@ -386,7 +385,7 @@ class ObjectTfBroadcaster:
                 else:
                     rospy.loginfo("Impossible to calculate depth of object")
         self.save_InterestPoint()
-        update_score()
+        self.update_score()
         tac=time.time()
         process=tac-tic
         rospy.loginfo("Process time %f  ",process)
