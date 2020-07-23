@@ -2,9 +2,7 @@
 __author__ = 'simonernst'
 """
 This program will get 3D position of an item from get_coordinate_object node 
-and associate it to an Interest Point
-
-Written by Simon ERNST
+and save it as an Interest Point
 """
 
 import rospy
@@ -56,7 +54,7 @@ class ObjectTfBroadcaster:
 
         self.reset_objects_service = rospy.Service(rospy.get_param("~service_reset_objects"), ResetObjects, self.handle_reset_object_service)
         self.update_score_available = True
-        thread.start_new_thread(self.update_score,())
+        #thread.start_new_thread(self.update_score,())
 
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
@@ -115,7 +113,7 @@ class ObjectTfBroadcaster:
         
         self.update_score_available = True
 
-        thread.start_new_thread(self.update_score,())
+        #thread.start_new_thread(self.update_score,())
 
         return ResetObjectsResponse("OK")
 
@@ -173,48 +171,51 @@ class ObjectTfBroadcaster:
 
 
     def update_score(self):  
-        while self.update_score_available:
-            dirs = os.listdir(self.TEMP_PATH)
-            itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
-            
+        dirs = os.listdir(self.TEMP_PATH)
+        itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
+        rospy.loginfo("Updating score initiated")
+        for fileName in dirs:
+            score=0.0
+            if "object" in str(fileName):
+                json_file = open(self.TEMP_PATH + str(fileName), 'r')
+                #rospy.logwarn(fileName)
+                data = json.load(json_file)
+                json_file.close()
+                cumul_darknet = data['confidence_darknet']
+                count = data['count']
+                overlap = data['overlap']
 
-            for fileName in dirs:
-                score=0.0
-                if "object" in str(fileName):
-                    json_file = open(self.TEMP_PATH + str(fileName), 'r')
-                    data = json.load(json_file)
-                    json_file.close()
-                    cumul_darknet = data['confidence_darknet']
-                    count = data['count']
-                    overlap = data['overlap']
+                #total counts - counts of other objects at the same location
+                corrected_counts = count - overlap
+                
+                #No need for negative values
+                if corrected_counts < 0:
+                    corrected_counts = 0
 
-                    #total counts - counts of other objects at the same location
-                    corrected_counts = count - overlap
-                    
-                    if corrected_counts < 0:
-                        corrected_counts = 0
+                temps = time.time() - data['last_seen']
+                round_time=math.ceil(temps)
+                val = math.log(round_time+0.0000001)+1
+                mean_darknet = cumul_darknet / count
 
-                    temps = time.time() - data['last_seen']
-                    round_time=math.ceil(temps)
-                    val = math.log(round_time+0.0000001)+1
-                    mean_darknet = cumul_darknet / count
-                    score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
+                #Score calculation function
+                score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
 
-                    rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
-                                    str(data['label']), mean_darknet, temps,count,corrected_counts)
+                #rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
+                #                str(data['label']), mean_darknet, temps,count,corrected_counts)
 
-                    json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
-                    data['score']=score
-                    json_tmp.write(json.dumps(data))
-                    json_tmp.close()
-                    rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
+                json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
+                data['score']=score
+                json_tmp.write(json.dumps(data))
+                json_tmp.close()
+                #rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
 
-                    if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
-                        json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
-                        json_itp.write(json.dumps(data))
-                        json_itp.close()
-                        rospy.loginfo("Updating Interest Point %s", fileName)
-            time.sleep(self._sleep_time)
+                if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+                    json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
+                    json_itp.write(json.dumps(data))
+                    json_itp.close()
+                    #rospy.loginfo("Updating Interest Point %s", fileName)
+        #time.sleep(self._sleep_time)
+        rospy.loginfo("Update score completed")
 
 
     def save_InterestPoint(self):
@@ -226,7 +227,7 @@ class ObjectTfBroadcaster:
             data = json.load(json_file)
             json_file.close()
 
-            if data['score']>0 and data['count']>10 and not os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
+            if data['score']>0 and data['count']>5 and not os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
                 rospy.loginfo("Saving an object as Interest Point")
                 #save object position as geometry_msgs/Pose
                 itp_pose = Pose()
@@ -271,7 +272,7 @@ class ObjectTfBroadcaster:
         tic=time.time()
         self.dirs = os.listdir(self.TEMP_PATH)
         #os.system('clear')
-        rospy.loginfo("Reading iremove_choosen_objectnterest point directory \n")
+        #rospy.loginfo("Reading interest point directory \n")
 
         if len(req.points)>0:
             for point in req.points:
@@ -303,6 +304,7 @@ class ObjectTfBroadcaster:
                     for fileName in self.dirs:
                         if "object" in str(fileName):
                             with open(self.TEMP_PATH + str(fileName), 'r') as json_file:
+                                #rospy.logwarn(fileName)
                                 data = json.load(json_file)
                                 json_file.close()
                             if pos_x - 0.5 <= data['pose']['position']['x'] <= pos_x + 0.5 and pos_y - 0.5 <= data['pose']['position']['y'] <= pos_y + 0.5 and pos_z - 0.5 <= data['pose']['position']['z'] <= pos_z + 0.5:
@@ -384,10 +386,12 @@ class ObjectTfBroadcaster:
                 else:
                     rospy.loginfo("Impossible to calculate depth of object")
         self.save_InterestPoint()
+        self.update_score()
         tac=time.time()
         process=tac-tic
         rospy.loginfo("Process time %f  ",process)
 
+        
 
 
 if __name__ == '__main__':
@@ -399,7 +403,7 @@ if __name__ == '__main__':
         temp_value="../../../../data/world_mng/temp/"
     except:
         pass
-        #Find a way to create those directories
+        #Find a way to create those directories if non existent 
 
 
     config_directory_param=rospy.get_param("~confPath",map_value)
