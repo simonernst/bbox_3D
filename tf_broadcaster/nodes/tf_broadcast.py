@@ -56,7 +56,7 @@ class ObjectTfBroadcaster:
 
         self.reset_objects_service = rospy.Service(rospy.get_param("~service_reset_objects"), ResetObjects, self.handle_reset_object_service)
         self.update_score_available = True
-        thread.start_new_thread(self.update_score,())
+        #thread.start_new_thread(self.update_score,())
 
         # spin() simply keeps python from exiting until this node is stopped
         rospy.spin()
@@ -115,7 +115,7 @@ class ObjectTfBroadcaster:
         
         self.update_score_available = True
 
-        thread.start_new_thread(self.update_score,())
+        #thread.start_new_thread(self.update_score,())
 
         return ResetObjectsResponse("OK")
 
@@ -201,20 +201,20 @@ class ObjectTfBroadcaster:
                     mean_darknet = cumul_darknet / count
                     score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
 
-                    rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
-                                    str(data['label']), mean_darknet, temps,count,corrected_counts)
+                    #rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
+                    #                str(data['label']), mean_darknet, temps,count,corrected_counts)
 
                     json_tmp = open(self.TEMP_PATH + str(fileName), 'w+')
                     data['score']=score
                     json_tmp.write(json.dumps(data))
                     json_tmp.close()
-                    rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
+                    #rospy.loginfo("Object %s has a score of %f with %d counts \n", data['label'], score, count)
 
                     if os.path.exists(self.MAP_MANAGER_PATH + str(fileName)):
                         json_itp = open(self.MAP_MANAGER_PATH + str(fileName), 'w+')
                         json_itp.write(json.dumps(data))
                         json_itp.close()
-                        rospy.loginfo("Updating Interest Point %s", fileName)
+                        #rospy.loginfo("Updating Interest Point %s", fileName)
             time.sleep(self._sleep_time)
 
 
@@ -272,7 +272,7 @@ class ObjectTfBroadcaster:
         tic=time.time()
         self.dirs = os.listdir(self.TEMP_PATH)
         #os.system('clear')
-        rospy.loginfo("Reading iremove_choosen_objectnterest point directory \n")
+        #rospy.loginfo("Reading interest point directory \n")
 
         if len(req.points)>0:
             for point in req.points:
@@ -386,10 +386,12 @@ class ObjectTfBroadcaster:
                 else:
                     rospy.loginfo("Impossible to calculate depth of object")
         self.save_InterestPoint()
+        update_score()
         tac=time.time()
         process=tac-tic
         rospy.loginfo("Process time %f  ",process)
 
+        
 
 
 if __name__ == '__main__':
