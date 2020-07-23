@@ -2,9 +2,7 @@
 __author__ = 'simonernst'
 """
 This program will get 3D position of an item from get_coordinate_object node 
-and associate it to an Interest Point
-
-Written by Simon ERNST
+and save it as an Interest Point
 """
 
 import rospy
@@ -175,13 +173,12 @@ class ObjectTfBroadcaster:
     def update_score(self):  
         dirs = os.listdir(self.TEMP_PATH)
         itP_dirs = os.listdir(self.MAP_MANAGER_PATH)
-        
-
+        rospy.loginfo("Updating score initiated")
         for fileName in dirs:
             score=0.0
             if "object" in str(fileName):
                 json_file = open(self.TEMP_PATH + str(fileName), 'r')
-                rospy.logwarn(fileName)
+                #rospy.logwarn(fileName)
                 data = json.load(json_file)
                 json_file.close()
                 cumul_darknet = data['confidence_darknet']
@@ -191,6 +188,7 @@ class ObjectTfBroadcaster:
                 #total counts - counts of other objects at the same location
                 corrected_counts = count - overlap
                 
+                #No need for negative values
                 if corrected_counts < 0:
                     corrected_counts = 0
 
@@ -198,6 +196,8 @@ class ObjectTfBroadcaster:
                 round_time=math.ceil(temps)
                 val = math.log(round_time+0.0000001)+1
                 mean_darknet = cumul_darknet / count
+
+                #Score calculation function
                 score = 100*(float(corrected_counts)*0.01*mean_darknet/float(val))/count
 
                 #rospy.loginfo("\n Object label : %s \n Mean confidence : %f \n Time since last seen : %f \n Counts : %d \n Corrected counts : %d", 
@@ -215,6 +215,7 @@ class ObjectTfBroadcaster:
                     json_itp.close()
                     #rospy.loginfo("Updating Interest Point %s", fileName)
         #time.sleep(self._sleep_time)
+        rospy.loginfo("Update score completed")
 
 
     def save_InterestPoint(self):
@@ -303,7 +304,7 @@ class ObjectTfBroadcaster:
                     for fileName in self.dirs:
                         if "object" in str(fileName):
                             with open(self.TEMP_PATH + str(fileName), 'r') as json_file:
-                                rospy.logwarn(fileName)
+                                #rospy.logwarn(fileName)
                                 data = json.load(json_file)
                                 json_file.close()
                             if pos_x - 0.5 <= data['pose']['position']['x'] <= pos_x + 0.5 and pos_y - 0.5 <= data['pose']['position']['y'] <= pos_y + 0.5 and pos_z - 0.5 <= data['pose']['position']['z'] <= pos_z + 0.5:
@@ -402,7 +403,7 @@ if __name__ == '__main__':
         temp_value="../../../../data/world_mng/temp/"
     except:
         pass
-        #Find a way to create those directories
+        #Find a way to create those directories if non existent 
 
 
     config_directory_param=rospy.get_param("~confPath",map_value)
