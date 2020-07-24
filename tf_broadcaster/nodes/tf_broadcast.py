@@ -134,6 +134,7 @@ class ObjectTfBroadcaster:
 
     def handle_service_get_people_in_room(self,req):
         room = req.room
+        room = room.replace(" ","")
 
         list_people = []
         dirs = os.listdir(self.MAP_MANAGER_PATH)
