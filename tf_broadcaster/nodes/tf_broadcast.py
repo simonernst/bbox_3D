@@ -119,7 +119,7 @@ class ObjectTfBroadcaster:
 
     def handle_service_get_objects(self,req):
         room = req.room
-        
+        room = room.replace(" ","")
         list_objects = []
 
         dirs = os.listdir(self.MAP_MANAGER_PATH)
