@@ -1,0 +1,4 @@
+string area_name
+int32 interactive_markers_number
+---
+string building_response
