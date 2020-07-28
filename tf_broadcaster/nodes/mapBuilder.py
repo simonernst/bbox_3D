@@ -144,8 +144,7 @@ class MapBuilder():
         try:
             with open(file_path,'r+') as json_file:
                 data = json.load(json_file)
-        except Exception as e:
-            rospy.logwarn(e)
+        except:
             data = {}
 
         if data == {}:
@@ -156,7 +155,11 @@ class MapBuilder():
         else:
             for key in self.coord_IMs.keys():
                 for id in self.coord_IMs[key].keys():
-                    data[key][id]=self.coord_IMs[key][id]
+                    if key in data.keys():
+                        data[key][id]=self.coord_IMs[key][id]
+                    else:
+			data[key]={}
+                        data[key][id]=self.coord_IMs[key][id]
 
             with open(file_path,'w+') as json_file:
                 json.dump(data, json_file, indent=4)
