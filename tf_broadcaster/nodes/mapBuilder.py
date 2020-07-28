@@ -1,5 +1,38 @@
 #!/usr/bin/env python
 
+"""
+Copyright (c) 2011, Willow Garage, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the Willow Garage, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived from
+      this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+Modified by Thomas CURE
+
+This code loads a JSON file containing coordinates for interactive markers, can create new interactive markers to define the limits of a room, save it and determine if a point XY is in that room or not
+"""
+
 import rospy
 from geometry_msgs.msg import Point32, PointStamped, Polygon, PolygonStamped
 from std_msgs.msg import Header
@@ -24,17 +57,11 @@ class MapBuilder():
         self.map_saving_service = rospy.Service(rospy.get_param("~service_saving_map_area"),SavingMapArea,self.handle_saving_map_area)
         rospy.loginfo("{class_name} : service saving map area connected".format(class_name=self.__class__.__name__))
 
-        
-
         self.server = InteractiveMarkerServer("simple_marker")
 
         self.coord_IMs = {}
         self.current_dir = os.path.dirname(os.path.realpath(__file__))
-
-
         self.load_last_map()
-
-
         self.current_area_service = rospy.Service(rospy.get_param("~service_get_current_area_name"), CurrentArea, self.handle_current_area_service)
         rospy.loginfo("{class_name} : service get current map area connected".format(class_name=self.__class__.__name__))
 
@@ -42,6 +69,14 @@ class MapBuilder():
 
 
     def handle_current_area_service(self,req):
+        """
+        Will handle the get_current_map_area service call. This function will get the XY coordinates of a point in parameter and determine in which room this point is located.
+        Returns a response containing the room name.
+
+        :param req: input parameters of the service
+        :type action: CurrentArea
+    
+        """
         x_robot = req.coord_x
         y_robot = req.coord_y
         point_to_check = Point(x_robot, y_robot)
@@ -59,7 +94,9 @@ class MapBuilder():
         return CurrentAreaResponse('')
 
     def load_last_map(self):
-
+        """
+        Will load the file specified in config file containing the map rooms. Displays the interactive markers on the last saved points
+        """
         rospy.loginfo(self.current_dir)
         file_path = os.path.join(self.current_dir,rospy.get_param("~map_file_path"))
 
@@ -138,6 +175,13 @@ class MapBuilder():
 
 
     def handle_saving_map_area(self,req):
+        """
+        Will handle the saving_map_area service call. This function will save the coordinates of each interactive marker in a JSON.
+        Returns a text message as response
+
+        :param req: input parameters of the service
+        :type action: SavingMapArea
+        """
 
         file_path = os.path.join(self.current_dir,rospy.get_param("~map_file_path"))
 
@@ -170,6 +214,11 @@ class MapBuilder():
         
 
     def processFeedback(self,feedback):
+        """
+        Will display the coordinates of the interactive marker which has just been moved.
+        :param feedback: feedback of the interactive marker server
+        :type feedback: InteractiveMarkerFeedback
+        """
         p = feedback.pose.position
         rospy.loginfo("{class_name} : ".format(class_name=self.__class__.__name__) + feedback.marker_name + " is now at " + str(p.x) + ", " + str(p.y) + ", " + str(p.z))
 
@@ -186,6 +235,14 @@ class MapBuilder():
 
 
     def handle_building_map_area(self,req):
+        """
+        Will handle the building_map_area service call. This function will create the interactive markers to build a new room.
+        Returns a text message as response
+
+        :param req: input parameters of the service
+        :type action: BuildingMapArea
+        """
+        
         area_name = req.area_name
         interactive_markers_number = req.interactive_markers_number
         self.coord_IMs[area_name]={}
