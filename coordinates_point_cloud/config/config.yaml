@@ -13,5 +13,7 @@ people_detection_topic: "/people_meta_info_only"
 service_reset_objects: "reset_object_files"
 service_building_map_area: "building_map_area"
 service_saving_map_area: "saving_map_area"
+
+# those paths will be added to bbox_3D/tf_broadcaster/nodes/ and the data folder must be at the same level as the src folder of the workspace
 path_to_data_temp: "../../../../data/world_mng/temp/"
 path_to_data_ipt: "../../../../data/world_mng/interest_points/"
