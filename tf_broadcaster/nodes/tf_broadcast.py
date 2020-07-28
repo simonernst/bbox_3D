@@ -29,10 +29,24 @@ class ObjectTfBroadcaster:
     _sleep_time = 2
 
 
-    def __init__(self,conf_path,conf_path2):
+    def __init__(self):
+
+        rospy.init_node('tfbroadcaster')
+
         print(os.getcwd())
-        self.TEMP_PATH=conf_path2
-        self.MAP_MANAGER_PATH=conf_path
+
+        self.current_dir = os.path.dirname(os.path.realpath(__file__))
+
+
+        self.TEMP_PATH=rospy.get_param("~path_to_data_temp")
+        temp_folder = os.path.join(self.current_dir,self.TEMP_PATH)
+        if not os.path.exists(temp_folder):
+            os.makedirs(temp_folder)
+        
+        self.MAP_MANAGER_PATH=rospy.get_param("~path_to_data_ipt")
+        itp_folder = os.path.join(self.current_dir,self.MAP_MANAGER_PATH)
+        if not os.path.exists(itp_folder):
+            os.makedirs(itp_folder)
         self.configure()
 
     def configure(self):
@@ -397,17 +411,16 @@ class ObjectTfBroadcaster:
 
 if __name__ == '__main__':
     
-    rospy.init_node('tfbroadcaster')
     
-    try:
-        map_value="../../../../data/world_mng/interest_points/"
-        temp_value="../../../../data/world_mng/temp/"
-    except:
-        pass
+    # try:
+    #     map_value="../../../../data/world_mng/interest_points/"
+    #     temp_value="../../../../data/world_mng/temp/"
+    # except:
+    #     pass
         #Find a way to create those directories if non existent 
 
 
-    config_directory_param=rospy.get_param("~confPath",map_value)
-    config_directory_param2=rospy.get_param("~trucpath",temp_value)
+    # config_directory_param=rospy.get_param("~confPath",map_value)
+    # config_directory_param2=rospy.get_param("~trucpath",temp_value)
 
-    mm = ObjectTfBroadcaster(config_directory_param,config_directory_param2)
+    tf_broadcaster_instance = ObjectTfBroadcaster()
